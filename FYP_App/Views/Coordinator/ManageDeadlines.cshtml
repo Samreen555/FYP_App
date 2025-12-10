@@ -1,0 +1,101 @@
+﻿@model FYP_App.Models.GlobalSettings
+@{
+    ViewData["Title"] = "Manage Deadlines";
+}
+
+<style>
+    /* Restore Slate Purple Theme */
+    .bg-theme { background-color: #7B7D9C; color: white; }
+    .text-theme { color: #7B7D9C; }
+    .btn-theme { background-color: #7B7D9C; color: white; border: none; }
+    .btn-theme:hover { background-color: #6a6c8a; color: white; }
+    .section-title { border-left: 5px solid #7B7D9C; padding-left: 10px; color: #555; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-md-9">
+            <div class="card shadow border-0">
+                <div class="card-header bg-theme">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Set System Deadlines</h5>
+                </div>
+                <div class="card-body p-4">
+
+                    <form asp-action="UpdateDeadlines" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-4">
+                            <div class="section-title mb-3">Registration Phase</div>
+                            <div class="row align-items-end">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-bold text-muted">Registration Deadline</label>
+                                    <input asp-for="RegistrationDeadline" class="form-control" type="date" />
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch mb-2 p-2 border rounded bg-light">
+                                        <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="RegistrationOpen" style="margin-left: 0.5em;">
+                                        <label class="form-check-label fw-bold text-dark ps-2" asp-for="RegistrationOpen">Registration Open</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="text-muted opacity-25 my-4">
+
+                        <div class="mb-3">
+                            <div class="section-title mb-3">Document Submissions</div>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded bg-light h-100">
+                                        <label class="form-label fw-bold text-dark">Proposal Submission</label>
+                                        <input asp-for="ProposalDeadline" class="form-control" type="date" />
+                                        <small class="text-muted d-block mt-1">Deadline for initial proposal upload.</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded bg-light h-100">
+                                        <label class="form-label fw-bold text-dark">SRS Document</label>
+                                        <input asp-for="SRSDeadline" class="form-control" type="date" />
+                                        <small class="text-muted d-block mt-1">Software Requirement Specification.</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded bg-light h-100">
+                                        <label class="form-label fw-bold text-dark">SDS Document (Midterm)</label>
+                                        <input asp-for="SDSDeadline" class="form-control" type="date" />
+                                        <small class="text-muted d-block mt-1">Software Design Specification.</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded bg-light h-100">
+                                        <label class="form-label fw-bold text-dark">Final Report</label>
+                                        <input asp-for="FinalReportDeadline" class="form-control" type="date" />
+                                        <small class="text-muted d-block mt-1">Final thesis submission deadline.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 pt-2 border-top">
+                            <a asp-action="Index" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-theme px-4 fw-bold shadow-sm">
+                                <i class="fas fa-save me-2"></i>Save Settings
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

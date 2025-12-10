@@ -1,0 +1,46 @@
+﻿@model IEnumerable<FYP_App.Models.Project>
+@{
+    ViewData["Title"] = "Supervisor Alerts";
+}
+
+<div class="container-fluid mt-4">
+    <h4 class="text-secondary mb-4"><i class="fas fa-bell me-2 text-danger"></i>HOD Supervisor Reports</h4>
+
+    @if (!Model.Any())
+    {
+            <div class="alert alert-success">No supervisors have been reported by the HOD.</div>
+    }
+    else
+    {
+            <div class="row">
+            @foreach (var proj in Model)
+            {
+                        <div class="col-md-6 mb-4">
+                            <div class="card shadow-sm border-danger border-start border-4">
+                                <div class="card-body">
+                                    <h5 class="fw-bold text-danger">Reported: @(proj.Supervisor?.FullName ?? "Unknown")</h5>
+                                    <p class="text-muted">Project: @proj.Title</p>
+                                    <div class="alert alert-warning small">
+                                        <strong>HOD Note:</strong> This supervisor was flagged for inactivity. Please take action.
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="ManageProjects" class="btn btn-dark btn-sm w-50">
+                                            <i class="fas fa-exchange-alt me-2"></i>Reassign
+                                        </a>
+
+                                        <form asp-action="AcknowledgeReport" method="post" class="w-50">
+                                            <input type="hidden" name="projectId" value="@proj.Id" />
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                                                <i class="fas fa-check me-2"></i>Dismiss
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+            }
+            </div>
+    }
+</div>

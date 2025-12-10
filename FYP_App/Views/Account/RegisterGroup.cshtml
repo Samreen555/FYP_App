@@ -1,0 +1,143 @@
+﻿@model FYP_App.Models.FypRegistration
+@{
+    ViewData["Title"] = "Group Registration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isActive = ViewBag.IsActive ?? true;
+}
+
+<style>
+    
+    .register-card { border: none; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); overflow: hidden; }
+    .register-header { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white; padding: 2rem; }
+    .register-header-closed { background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%); color: white; padding: 2rem; }
+    .btn-gradient { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); border: none; color: white; transition: transform 0.2s; }
+    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); color: white; }
+    .form-control:focus, .form-select:focus { border-color: #3498db; box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25); }
+    .section-title { color: #2c3e50; font-weight: 600; border-bottom: 2px solid #ecf0f1; padding-bottom: 0.5rem; margin-bottom: 1.5rem; margin-top: 1.5rem; }
+</style>
+
+<div class="container mt-5 mb-5" style="max-width: 900px;">
+
+    @if (!isActive)
+    {
+            <div class="alert alert-danger shadow-sm border-danger">
+                <h4 class="alert-heading"><i class="fas fa-lock"></i> Registration Closed</h4>
+                <p class="mb-0">The deadline for FYP registration has passed. New submissions are currently disabled.</p>
+            </div>
+    }
+
+    <div class="card register-card">
+        <div class="@(isActive ? "register-header" : "register-header-closed")">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1"><i class="fas fa-users me-2"></i>FYP Group Registration</h3>
+                    <p class="mb-0 opacity-75">Please fill in the details for both students.</p>
+                </div>
+                @if (!isActive)
+                {
+                    <span class="badge bg-danger fs-6 shadow-sm">CLOSED</span>
+                }
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <form asp-action="RegisterGroup" method="post">
+                <fieldset @(isActive ? "" : "disabled")>
+
+                    <h5 class="section-title">
+                        <i class="fas fa-user-graduate me-2 text-primary"></i>Student 1
+                    </h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Full Name</label>
+                            <input asp-for="Student1Name" class="form-control" placeholder="Enter Full Name" required />
+                            <span asp-validation-for="Student1Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Enrollment ID</label>
+                            <input asp-for="Student1RegNo" class="form-control" placeholder="xx-xxxxxx-xxx" required />
+                            <span asp-validation-for="Student1RegNo" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Email Address</label>
+                            <input asp-for="Student1Email" type="email" class="form-control" placeholder="Enter Email Address" required />
+                            <span asp-validation-for="Student1Email" class="text-danger small"></span>
+                            <small class="text-muted" style="font-size: 0.75rem;">Login credentials will be sent here.</small>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title">
+                        <i class="fas fa-user me-2 text-primary"></i>Student 2
+                    </h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Full Name</label>
+                            <input asp-for="Student2Name" class="form-control" placeholder="Enter Full Name" required />
+                            <span asp-validation-for="Student2Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Enrollment ID</label>
+                            <input asp-for="Student2RegNo" class="form-control" placeholder="xx-xxxxxx-xxx" required />
+                            <span asp-validation-for="Student2RegNo" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Email Address</label>
+                            <input asp-for="Student2Email" type="email" class="form-control" placeholder="Enter Email Address" required />
+                            <span asp-validation-for="Student2Email" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title">
+                        <i class="fas fa-project-diagram me-2 text-primary"></i>Project Details
+                    </h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label asp-for="ProposedTitle" class="form-label fw-bold">Proposed Title</label>
+                            <input asp-for="ProposedTitle" class="form-control" placeholder="Enter Proposed Project Title" required />
+                            <span asp-validation-for="ProposedTitle" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="ProposedDomain" class="form-label fw-bold">Domain / Technology</label>
+                            <select asp-for="ProposedDomain" class="form-select" required>
+                                <option value="">Select Domain...</option>
+                                <option>Web Development</option>
+                                <option>Artificial Intelligence / ML</option>
+                                <option>Mobile Application</option>
+                                <option>Internet of Things (IoT)</option>
+                                <option>Cyber Security</option>
+                                <option>Blockchain</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PreferredSupervisor" class="form-label fw-bold">Preferred Supervisor</label>
+                            <input asp-for="PreferredSupervisor" class="form-control" placeholder="Enter Preferred Supervisor Name" required />
+                            <span asp-validation-for="PreferredSupervisor" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-5">
+                        @if (isActive)
+                        {
+                                <button type="submit" class="btn btn-gradient py-3 fw-bold shadow-sm">
+                                    <i class="fas fa-paper-plane me-2"></i> Submit Registration
+                                </button>
+                        }
+                        else
+                        {
+                                <button type="button" class="btn btn-secondary py-3 fw-bold" disabled>
+                                    <i class="fas fa-lock me-2"></i> Submission Locked
+                                </button>
+                        }
+                    </div>
+
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>

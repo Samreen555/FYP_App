@@ -1,0 +1,91 @@
+﻿@model FYP_App.Models.Project
+@{
+    ViewData["Title"] = "Evaluate Project";
+}
+
+<style>
+    .bg-theme-red { background-color: #e55039; color: white; }
+    .btn-theme-red { background-color: #e55039; color: white; border: none; }
+    .btn-theme-red:hover { background-color: #b33925; color: white; }
+</style>
+
+<div class="container mt-5" style="max-width: 700px;">
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-theme-red text-white py-3">
+            <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Evaluate: @ViewBag.DefenseType</h5>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="mb-4 border-bottom pb-3">
+                <label class="text-muted small fw-bold text-uppercase">Project Title</label>
+                <h5 class="fw-bold text-dark">@Model.Title</h5>
+                <div class="d-flex align-items-center mt-2">
+                    <span class="badge bg-light text-dark border me-2">
+                        <i class="fas fa-user me-1"></i> @Model.Student?.FullName
+                    </span>
+                </div>
+            </div>
+
+            <form asp-action="SubmitEvaluation" method="post">
+                <input type="hidden" name="projectId" value="@Model.Id" />
+                <input type="hidden" name="defenseType" value="@ViewBag.DefenseType" />
+
+                @if (ViewBag.DefenseType == "Proposal Defense")
+                {
+                        <div class="alert alert-warning border-0 d-flex align-items-center mb-4">
+                            <i class="fas fa-info-circle fa-2x me-3 opacity-50"></i>
+                            <div>
+                                <strong>Feedback Only Phase</strong><br/>
+                                <small>Marks are not awarded for the Proposal Defense. Please provide qualitative feedback below.</small>
+                            </div>
+                        </div>
+                        <input type="hidden" name="marks" value="0" />
+                }
+                else
+                {
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-danger">Marks Awarded</label>
+                            <div class="p-3 bg-light rounded border">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block mb-1">
+                                        @if (ViewBag.DefenseType == "Final Defense")
+                                        {
+                                            <span>Final Evaluation (Internal/External)</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Individual Score (Average of 3 members)</span>
+                                        }
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-lg">
+                                            <input type="number" name="marks" class="form-control fw-bold text-center text-danger" 
+                                                   min="0" max="15" step="0.5" required placeholder="0" />
+                                            <span class="input-group-text bg-white fw-bold">/ 15</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                }
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Feedback / Remarks</label>
+                    <textarea name="feedback" class="form-control" rows="5" required 
+                              placeholder="Enter detailed feedback for the student..."></textarea>
+                    <div class="form-text">These comments will be visible to the student and coordinator.</div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-theme-red px-5 py-2 fw-bold shadow-sm">
+                        <i class="fas fa-paper-plane me-2"></i>Submit Evaluation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

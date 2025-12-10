@@ -1,0 +1,213 @@
+﻿@model FYP_App.Models.Project
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<style>
+    /* Slate Blue Theme */
+    .bg-theme-blue { background-color: #4A69BD; color: white; }
+    .text-theme-blue { color: #4A69BD; }
+    .border-theme-blue { border-left: 5px solid #4A69BD !important; }
+    .btn-theme-blue { background-color: #4A69BD; color: white; border:none; }
+    .btn-theme-blue:hover { background-color: #3c559c; color: white; }
+    .progress-bar-custom { background-color: #4A69BD; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+            <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (Model != null && !string.IsNullOrEmpty(Model.WarningMessage))
+    {
+        @if (Model.Status == "Cancelled")
+        {
+                    <div class="card shadow border-0 mt-4 border-danger border-start border-5">
+                        <div class="card-body p-5 text-center">
+                            <i class="fas fa-user-lock fa-4x text-danger mb-3"></i>
+                            <h2 class="text-danger fw-bold">Account Blocked</h2>
+                            <h5 class="text-muted mt-2">Registration Cancelled</h5>
+                            <div class="alert alert-light mt-3 d-inline-block border">
+                                <strong>Reason:</strong> @Model.WarningMessage
+                            </div>
+                            <hr class="my-4">
+                            <p class="small text-muted">Please contact the HOD office.</p>
+                        </div>
+                    </div>
+            return; 
+        }
+
+        else
+        {
+                    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4 mt-3">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                        <div>
+                            <h5 class="alert-heading fw-bold mb-1 text-dark">Administrative Warning</h5>
+                            <p class="mb-0 text-dark">@Model.WarningMessage</p>
+                        </div>
+                    </div>
+        }
+    }
+
+    @if (Model == null)
+    {
+        var settings = ViewBag.Settings as FYP_App.Models.GlobalSettings;
+            <div class="card shadow-sm border-0 text-center p-5 mt-5">
+                <div class="card-body">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h3 class="fw-bold">No Active Project Found</h3>
+                    <p class="lead text-muted">You are logged in, but no Final Year Project is currently linked to your account.</p>
+                @if (settings != null && settings.RegistrationOpen && settings.RegistrationDeadline > DateTime.Now)
+                {
+                            <div class="alert alert-info d-inline-block">Registration is <strong>OPEN</strong> until @settings.RegistrationDeadline.ToString("dd MMM yyyy").</div>
+
+                    <br/>
+                            <a asp-controller="FypRegistration" asp-action="RegisterGroup" class="btn btn-theme-blue btn-lg px-5 mt-3"><i class="fas fa-plus-circle me-2"></i>Register / Link Project</a>
+                }
+                else
+                {
+                            <div class="alert alert-warning d-inline-block text-start" style="max-width: 500px;"><i class="fas fa-exclamation-triangle me-2"></i> <strong>Action Required</strong><br/>Registration is closed. Contact Coordinator.</div>
+                }
+                </div>
+            </div>
+    }
+
+    else
+    {
+        var settings = ViewBag.Settings as FYP_App.Models.GlobalSettings;
+        var defenses = ViewBag.UpcomingDefenses as IEnumerable<FYP_App.Models.DefenseSchedule>;
+
+            <div class="card shadow border-0 mb-4">
+                <div class="card-body">
+                @if (ViewBag.FinalGrade != null)
+                {
+                            <div class="alert alert-success text-center mb-4 border-0 shadow-sm" style="background-color: #d1e7dd;">
+                                <h4 class="alert-heading fw-bold"><i class="fas fa-trophy text-warning me-2"></i>Congratulations!</h4>
+                                <p class="mb-0">You have successfully completed your Final Year Project.</p>
+                                <hr>
+                                <h1 class="display-4 fw-bold text-success">Grade: @ViewBag.FinalGrade</h1>
+                            </div>
+                }
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-0">@Model.Title</h4>
+                            <span class="text-muted">Supervisor: @(Model.Supervisor?.FullName ?? "Assigned Soon")</span>
+                        </div>
+                        <a asp-action="SubmissionCenter" class="btn btn-theme-blue shadow-sm"><i class="fas fa-cloud-upload-alt me-2"></i>Go to Submission Center</a>
+                    </div>
+
+                    <div class="progress" style="height: 25px; border-radius: 15px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated progress-bar-custom" role="progressbar" style="width: @ViewBag.Progress%">@ViewBag.Progress%</div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mt-1 px-1"><span>Proposal</span><span>Initial</span><span>Midterm</span><span>Final</span><span>Complete</span></div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card shadow border-0 h-100 border-theme-blue">
+                        <div class="card-header bg-white"><h6 class="mb-0 fw-bold text-secondary"><i class="fas fa-clock me-2"></i>Upcoming Deadlines</h6></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6"><div class="p-3 border rounded bg-light h-100"><small class="text-muted d-block">Proposal Submission</small>
+                                    @if (settings?.ProposalDeadline != null)
+                                    { 
+                                            <strong class="@(settings.ProposalDeadline < DateTime.Now ? "text-danger" : "text-dark")">@settings.ProposalDeadline.Value.ToString("dd MMM yyyy")</strong>
+                                        if (settings.ProposalDeadline < DateTime.Now)
+                                        {
+                                            <span class="badge bg-danger ms-2" style="font-size:0.7em">Closed</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic small">Date pending</span>
+                                    }
+                                </div></div>
+                                <div class="col-md-6"><div class="p-3 border rounded bg-light h-100"><small class="text-muted d-block">SRS Document</small>
+                                    @if (settings?.SRSDeadline != null)
+                                    { 
+                                            <strong class="@(settings.SRSDeadline < DateTime.Now ? "text-danger" : "text-dark")">@settings.SRSDeadline.Value.ToString("dd MMM yyyy")</strong>
+                                        if (settings.SRSDeadline < DateTime.Now)
+                                        {
+                                            <span class="badge bg-danger ms-2" style="font-size:0.7em">Closed</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic small">Date pending</span>
+                                    }
+                                </div></div>
+                                <div class="col-md-6"><div class="p-3 border rounded bg-light h-100"><small class="text-muted d-block">SDS Document</small>
+                                    @if (settings?.SDSDeadline != null)
+                                    { 
+                                            <strong class="@(settings.SDSDeadline < DateTime.Now ? "text-danger" : "text-dark")">@settings.SDSDeadline.Value.ToString("dd MMM yyyy")</strong>
+                                        if (settings.SDSDeadline < DateTime.Now)
+                                        {
+                                            <span class="badge bg-danger ms-2" style="font-size:0.7em">Closed</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic small">Date pending</span>
+                                    }
+                                </div></div>
+                                <div class="col-md-6"><div class="p-3 border rounded bg-light h-100"><small class="text-muted d-block">Final Report</small>
+                                    @if (settings?.FinalReportDeadline != null)
+                                    { 
+                                            <strong class="@(settings.FinalReportDeadline < DateTime.Now ? "text-danger" : "text-dark")">@settings.FinalReportDeadline.Value.ToString("dd MMM yyyy")</strong>
+                                        if (settings.FinalReportDeadline < DateTime.Now)
+                                        {
+                                            <span class="badge bg-danger ms-2" style="font-size:0.7em">Closed</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic small">Date pending</span>
+                                    }
+                                </div></div>
+                            </div>
+                            <div class="mt-3 text-end"><small class="text-muted">To upload documents, visit the <a asp-action="SubmissionCenter">Submission Center</a>.</small></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow border-0 h-100">
+                        <div class="card-header bg-theme-blue text-white"><h6 class="mb-0 fw-bold"><i class="fas fa-calendar-day me-2"></i>Defense Schedule</h6></div>
+                        <div class="card-body p-0">
+                        @if (defenses != null && defenses.Any())
+                        {
+                                    <ul class="list-group list-group-flush">
+                                @foreach (var def in defenses)
+                                {
+                                                <li class="list-group-item p-3">
+                                                    <div class="text-center">
+                                                        <h6 class="fw-bold text-dark mb-1">@def.DefenseType</h6>
+                                                        <h2 class="text-theme-blue display-6 fw-bold mb-0">@def.Date.ToString("dd")</h2>
+                                                        <p class="text-uppercase fw-bold text-muted mb-1" style="font-size: 0.8rem;">@def.Date.ToString("MMMM yyyy")</p>
+                                                        <div class="d-flex justify-content-center gap-2 mt-2">
+                                                            <span class="badge bg-danger"><i class="fas fa-clock me-1"></i>@def.Date.ToString("hh:mm tt")</span>
+                                                            <span class="badge bg-light text-dark border"><i class="fas fa-map-marker-alt me-1"></i> @def.Room</span>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                }
+                                    </ul>
+                        }
+                        else
+                        {
+                                    <div class="text-center py-5 text-muted"><i class="fas fa-calendar-times fa-3x mb-3 opacity-25"></i><p>No defense scheduled yet.</p></div>
+                        }
+                        </div>
+                    </div>
+                </div>
+            </div>
+    }
+</div>

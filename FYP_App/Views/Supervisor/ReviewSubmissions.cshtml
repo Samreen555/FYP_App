@@ -1,0 +1,136 @@
+﻿@model IEnumerable<FYP_App.Models.Project>
+@{
+    ViewData["Title"] = "Review Submissions";
+}
+
+<style>
+    .bg-theme-orange { background-color: #E08E45; color: white; }
+    .btn-theme-orange { background-color: #E08E45; color: white; border: none; }
+    .btn-theme-orange:hover { background-color: #d35400; color: white; }
+    .project-section { border-left: 5px solid #E08E45; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <h4 class="text-secondary mb-4"><i class="fas fa-file-contract me-2" style="color:#E08E45"></i>Document Reviews</h4>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No projects assigned to you yet.</div>
+    }
+
+    @foreach (var project in Model)
+    {
+            <div class="card shadow border-0 mb-5 project-section">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0 text-dark fw-bold">@project.Title</h5>
+                            <small class="text-muted">Student: @(project.Student?.FullName ?? "Unknown")</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Date</th>
+                                <th>Document Type</th>
+                                <th>Status</th>
+                                <th style="width: 30%;">Current Remarks</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (!project.Submissions.Any(s => s.SubmissionType != "Meeting Log Sheet"))
+                        { 
+                                    <tr><td colspan="5" class="text-center py-4 text-muted">No documents submitted yet.</td></tr> 
+                        }
+
+                        @foreach (var item in project.Submissions.Where(s => s.SubmissionType != "Meeting Log Sheet").OrderByDescending(s => s.SubmittedAt))
+                        {
+                                    <tr class="@(item.Status == "Pending Supervisor" ? "table-warning" : "")">
+                                        <td class="ps-4 text-secondary">@item.SubmittedAt.ToString("MMM dd")</td>
+                                        <td><span class="fw-bold text-dark">@item.SubmissionType</span></td>
+                                        <td>
+                                    @if (item.Status == "Pending Supervisor")
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                    else if (item.Status == "Rejected")
+                                    {
+                                        <span class="badge bg-danger">Rejected</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Forwarded</span>
+                                    }
+                                        </td>
+
+                                        <td>
+                                    @if (!string.IsNullOrEmpty(item.Remarks))
+                                    {
+                                                    <small class="text-muted fst-italic">"@item.Remarks"</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                        </td>
+
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="@item.FilePath" class="btn btn-sm btn-outline-secondary" download><i class="fas fa-download"></i></a>
+
+                                                <button class="btn btn-sm btn-theme-orange" data-bs-toggle="modal" data-bs-target="#reviewModal-@item.Id">
+                                                    <i class="fas fa-pen-square me-1"></i> Review / Give Feedback
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <div class="modal fade" id="reviewModal-@item.Id" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form asp-action="SubmitReview" method="post">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Review: @item.SubmissionType</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">Supervisor Remarks / Feedback</label>
+                                                            <textarea name="remarks" class="form-control" rows="4" placeholder="Type your feedback here...">@item.Remarks</textarea>
+                                                            <small class="text-muted">Students will see this text immediately.</small>
+                                                        </div>
+
+                                                        <div class="d-flex justify-content-between align-items-center mt-4">
+                                                            <button type="submit" name="decision" value="FeedbackOnly" class="btn btn-secondary text-white" title="Save comments without changing status">
+                                                                <i class="fas fa-save me-1"></i> Save Feedback Only
+                                                            </button>
+
+                                                            <div>
+                                                                <button type="submit" name="decision" value="Reject" class="btn btn-outline-danger me-2">Reject</button>
+                                                                <button type="submit" name="decision" value="Approve" class="btn btn-success">Approve</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    }
+</div>

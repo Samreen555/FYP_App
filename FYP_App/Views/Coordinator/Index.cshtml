@@ -1,0 +1,153 @@
+﻿@{
+    ViewData["Title"] = "Coordinator Dashboard";
+}
+
+<style>
+    /* Theme Colors */
+    .text-theme { color: #7B7D9C !important; }
+    .bg-theme { background-color: #7B7D9C !important; color: white; }
+    .border-theme { border-left: 5px solid #7B7D9C !important; }
+
+    /* Card Hover Effect */
+    .stat-card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+        cursor: pointer; /* Indicates clickable */
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+
+    /* Remove link underline for card wrappers */
+    a.card-link { text-decoration: none; color: inherit; display: block; }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+        <h2 class="h3 text-secondary"><i class="fas fa-tachometer-alt text-theme me-2"></i>Coordinator Dashboard</h2>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-xl-4 col-md-6">
+            <a asp-action="PendingRegistrations" class="card-link h-100">
+                <div class="card stat-card border-theme h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-theme text-uppercase mb-1">Pending Requests</div>
+                                <div class="h4 mb-0 fw-bold text-dark">@ViewBag.PendingRegistrations</div>
+                            </div>
+                            <div class="col-auto"><i class="fas fa-clipboard-list fa-2x text-gray-300 opacity-25"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <a asp-action="SupervisorAlerts" class="card-link h-100">
+                <div class="card stat-card h-100 py-2" style="border-left: 5px solid #dc3545;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-danger text-uppercase mb-1">HOD Reports</div>
+                                <div class="h4 mb-0 fw-bold text-danger">@ViewBag.ReportedSupervisors</div>
+                            </div>
+                            <div class="col-auto"><i class="fas fa-bullhorn fa-2x text-danger opacity-25"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <a asp-action="ScheduleDefense" class="card-link h-100">
+                <div class="card stat-card h-100 py-2" style="border-left: 5px solid #f6c23e;">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Upcoming Defenses</div>
+                                <div class="h4 mb-0 fw-bold text-dark">@ViewBag.ScheduledDefenses</div>
+                            </div>
+                            <div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300 opacity-25"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+
+        <div class="col-xl-6 col-md-6">
+            <div class="card stat-card h-100 py-2" style="border-left: 5px solid #1cc88a;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Active Students</div>
+                            <div class="h4 mb-0 fw-bold text-dark">@ViewBag.StudentCount</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-user-graduate fa-2x text-gray-300 opacity-25"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 col-md-6">
+            <div class="card stat-card h-100 py-2" style="border-left: 5px solid #36b9cc;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">Supervisors</div>
+                            <div class="h4 mb-0 fw-bold text-dark">@ViewBag.SupervisorCount</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-chalkboard-teacher fa-2x text-gray-300 opacity-25"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="text-secondary mb-3">Quick Actions</h5>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-theme fw-bold"><i class="fas fa-user-check me-2"></i>Registration</div>
+                <div class="card-body">
+                    <p class="text-muted small">Review new group registrations and set deadlines.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="PendingRegistrations" class="btn btn-outline-dark btn-sm">Review Pending Requests</a>
+                        <a asp-action="ManageDeadlines" class="btn btn-link text-theme btn-sm">Manage Deadlines</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-theme fw-bold"><i class="fas fa-gavel me-2"></i>Defense Management</div>
+                <div class="card-body">
+                    <p class="text-muted small">Manage faculty panels and schedule defenses.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="ManagePanels" class="btn btn-outline-dark btn-sm">Manage Panels</a>
+                        <a asp-action="ScheduleDefense" class="btn btn-outline-dark btn-sm">Schedule Defenses</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-theme fw-bold"><i class="fas fa-users-cog me-2"></i>System</div>
+                <div class="card-body">
+                    <p class="text-muted small">Manage system users and upload document templates.</p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="ManageUsers" class="btn btn-outline-dark btn-sm">Manage Users</a>
+                        <a asp-action="ManageTemplates" class="btn btn-outline-dark btn-sm">Upload Templates</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

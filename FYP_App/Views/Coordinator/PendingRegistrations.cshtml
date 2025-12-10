@@ -1,0 +1,74 @@
+﻿@model IEnumerable<FYP_App.Models.FypRegistration>
+@{
+    ViewData["Title"] = "Pending Registrations";
+}
+
+<style>
+    .bg-theme { background-color: #7B7D9C; color: white; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-theme d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-inbox me-2"></i>Pending Group Registrations</h5>
+            <span class="badge bg-light text-dark">@Model.Count() Requests</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>Student 1 (Leader)</th>
+                        <th>Student 2</th>
+                        <th>Proposed Project</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-5 text-muted">No pending registrations found.</td></tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                            <tr>
+                                <td class="ps-4 text-secondary">@item.RegisteredAt.ToString("MMM dd")</td>
+                                <td>
+                                    <strong>@item.Student1Name</strong><br/>
+                                    <small class="text-muted">@item.Student1RegNo</small>
+                                </td>
+                                <td>
+                                    <strong>@item.Student2Name</strong><br/>
+                                    <small class="text-muted">@item.Student2RegNo</small>
+                                </td>
+                                <td style="max-width: 250px;">
+                                    <span class="fw-bold text-dark">@item.ProposedTitle</span><br/>
+                                    <span class="badge bg-light text-dark border">@item.ProposedDomain</span>
+                                </td>
+                                <td>
+                                    <form asp-action="ApproveRegistration" method="post">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm text-white shadow-sm" 
+                                                onclick="return confirm('Approve this group and create login credentials?');">
+                                            <i class="fas fa-check me-1"></i> Approve
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

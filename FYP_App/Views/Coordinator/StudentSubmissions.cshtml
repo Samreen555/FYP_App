@@ -1,0 +1,116 @@
+﻿@model IEnumerable<FYP_App.Models.Submission>
+@{
+    ViewData["Title"] = "Review Submissions";
+}
+
+<style>
+    .bg-theme { background-color: #7B7D9C; color: white; }
+    .btn-theme { background-color: #7B7D9C; color: white; border: none; }
+    .btn-theme:hover { background-color: #636585; color: white; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-theme d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-file-signature me-2"></i>Review Student Submissions</h5>
+            <span class="badge bg-light text-dark">@Model.Count(m => m.Status == "Pending Coordinator") Pending</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>Project & Group</th>
+                        <th>Document Type</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-5 text-muted">No submissions awaiting Coordinator review.</td></tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                            <tr class="@(item.Status == "Pending Coordinator" ? "table-warning" : "")">
+                                <td class="ps-4 text-secondary">
+                                @item.SubmittedAt.ToString("MMM dd")<br/>
+                                    <small>@item.SubmittedAt.ToString("HH:mm")</small>
+                                </td>
+                                <td>
+                                    <strong>@(item.Project?.Title ?? "Unknown Project")</strong><br/>
+                                    <small class="text-muted">Sup: @(item.Project?.Supervisor?.FullName ?? "Unassigned")</small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark"><i class="fas fa-file-alt me-2 text-secondary"></i>@item.SubmissionType</span>
+                                    <br/>
+                                    <a href="@item.FilePath" class="small text-primary text-decoration-none" download>Download File</a>
+                                </td>
+                                <td>
+                                @if (item.Status == "Approved")
+                                {
+                                    <span class="badge bg-success">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Pending Coordinator</span>
+                                }
+                                </td>
+                                <td>
+                                @if (item.Status == "Pending Coordinator")
+                                {
+                                            <button class="btn btn-sm btn-theme shadow-sm" data-bs-toggle="modal" data-bs-target="#reviewModal-@item.Id">
+                                                Review
+                                            </button>
+                                }
+                                else
+                                {
+                                            <span class="text-muted small">Finalized</span>
+                                }
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="reviewModal-@item.Id" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-action="ReviewSubmission" method="post">
+                                            <div class="modal-header bg-light">
+                                                <h5 class="modal-title">Final Review: @item.SubmissionType</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Project:</strong> @(item.Project?.Title)</p>
+                                                <input type="hidden" name="id" value="@item.Id" />
+
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Coordinator Remarks</label>
+                                                    <textarea name="remarks" class="form-control" rows="3" placeholder="Enter feedback..."></textarea>
+                                                </div>
+
+                                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                                    <button type="submit" name="decision" value="Reject" class="btn btn-outline-danger me-2">Reject</button>
+                                                    <button type="submit" name="decision" value="Approve" class="btn btn-success text-white">Approve & Finalize</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

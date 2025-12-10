@@ -1,0 +1,101 @@
+﻿@model IEnumerable<FYP_App.Models.DocumentTemplate>
+@{
+    ViewData["Title"] = "Manage Templates";
+}
+
+<style>
+    /* Coordinator Slate Purple Theme */
+    .bg-theme { background-color: #7B7D9C; color: white; }
+    .text-theme { color: #7B7D9C; }
+    .btn-theme { background-color: #7B7D9C; color: white; border: none; }
+    .btn-theme:hover { background-color: #6a6c8a; color: white; }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-file-upload me-2 text-theme"></i>Upload Templates</h4>
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-theme">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-plus-circle me-2"></i>Upload New Template</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UploadTemplate" method="post" enctype="multipart/form-data">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Document Title</label>
+                            <select name="title" class="form-select" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="Proposal Format">Proposal Format</option>
+                                <option value="SRS Format">SRS Format</option>
+                                <option value="SDS Format">SDS Format</option>
+                                <option value="Final Thesis Format">Final Thesis Format</option>
+                                <option value="General Guidelines">General Guidelines</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Description (Optional)</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Short description..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary">File (PDF/Word)</label>
+                            <input type="file" name="file" class="form-control" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-theme w-100 py-2 fw-bold shadow-sm">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>Upload Template
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold text-secondary">Uploaded Templates</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Title</th>
+                                <th>Description</th>
+                                <th>File Name</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr><td colspan="5" class="text-center py-5 text-muted">No templates uploaded yet.</td></tr>
+                            }
+
+                            @foreach (var item in Model)
+                            {
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-dark">@item.Title</td>
+                                        <td><small class="text-muted">@(item.Description ?? "-")</small></td>
+                                        <td><small class="text-theme fw-bold">@item.FileName</small></td>
+                                        <td><small class="text-muted">@item.UploadedAt.ToString("dd MMM")</small></td>
+                                        <td>
+                                            <a href="@item.FilePath" class="btn btn-sm btn-outline-secondary shadow-sm" download>
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

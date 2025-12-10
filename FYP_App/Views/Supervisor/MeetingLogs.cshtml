@@ -1,0 +1,106 @@
+﻿@model IEnumerable<FYP_App.Models.Project>
+@{
+    ViewData["Title"] = "Log Book Verification";
+}
+
+<style>
+    .bg-theme-orange { background-color: #E08E45; color: white; }
+    .btn-theme-orange { background-color: #E08E45; color: white; border: none; }
+</style>
+
+<div class="container-fluid mt-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <h4 class="text-secondary mb-4"><i class="fas fa-book-reader me-2" style="color:#E08E45"></i>Log Book Verification</h4>
+
+    @foreach (var project in Model)
+    {
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-dark fw-bold">@project.Title</h5>
+                    <small class="text-muted">Student: @(project.Student?.FullName ?? "Unknown")</small>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Mtg #</th>
+                                <th>Date</th>
+                                <th style="width: 40%;">Activities / Plan</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @{ 
+                            var allLogs = ViewBag.AllLogs as IEnumerable<FYP_App.Models.MeetingLog>;
+                            var projectLogs = allLogs != null
+                                ? allLogs.Where(l => l.ProjectId == project.Id).OrderByDescending(l => l.MeetingNumber)
+                                : Enumerable.Empty<FYP_App.Models.MeetingLog>();
+                        }
+
+                        @if (!projectLogs.Any())
+                        {
+                            <tr><td colspan="5" class="text-center py-3 text-muted">No logs submitted yet.</td></tr>
+                        }
+
+                        @foreach (var log in projectLogs)
+                        {
+                                    <tr>
+                                        <td class="ps-4 fw-bold">#@log.MeetingNumber</td>
+                                        <td>@log.MeetingDate.ToString("dd MMM")</td>
+                                        <td>
+                                            <small class="d-block text-dark"><strong>Act:</strong> @log.StudentActivities</small>
+                                            <small class="d-block text-muted"><strong>Plan:</strong> @log.NextMeetingPlan</small>
+                                        </td>
+                                        <td>
+                                    @if (log.Status == "Verified")
+                                    {
+                                        <span class="badge bg-success">Verified</span>
+                                    }
+                                    else if (log.Status == "Rejected")
+                                    {
+                                        <span class="badge bg-danger">Rejected</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm @(log.Status == "Pending" ? "btn-theme-orange" : "btn-outline-secondary")" 
+                                                    data-bs-toggle="modal" data-bs-target="#vLog-@log.Id">
+                                        @(log.Status == "Pending" ? "Verify" : "Edit")
+                                            </button>
+
+                                            <div class="modal fade" id="vLog-@log.Id" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <form asp-action="VerifyLog" method="post" class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Verify Log #@log.MeetingNumber</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="logId" value="@log.Id" />
+                                                            <label class="form-label">Supervisor Comments:</label>
+                                                            <textarea name="comments" class="form-control" rows="2">@log.SupervisorComments</textarea>
+                                                            <div class="mt-3 text-end">
+                                                                <button type="submit" name="decision" value="Reject" class="btn btn-danger me-2">Reject</button>
+                                                                <button type="submit" name="decision" value="Approve" class="btn btn-success">Verify</button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    }
+</div>

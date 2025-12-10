@@ -1,0 +1,97 @@
+﻿@{
+    ViewData["Title"] = "Final Results Report";
+}
+
+<style>
+    
+    .bg-theme-teal { background-color: #76e4e6; color: #2c3e50; }
+    .text-theme-teal { color: #2baab1; }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-poll me-2 text-theme-teal"></i>Final Results Report</h4>
+        <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
+            <i class="fas fa-print me-1"></i> Print Report
+        </button>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-theme-teal border-0">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-list-alt me-2"></i>Consolidated Grade Sheet</h6>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle table-striped">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4" style="width: 25%;">Group Members</th>
+                        <th style="width: 25%;">Project Title</th>
+                        <th style="width: 20%;">Supervisor</th>
+                        <th class="text-center" style="width: 15%;">Total Marks</th>
+                        <th class="text-center" style="width: 15%;">Final Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (dynamic item in ViewBag.Results)
+                    {
+                        var proj = item.Project as FYP_App.Models.Project;
+                        var grade = item.Grade as FYP_App.Models.ProjectGrade;
+
+                        // LOGIC: Extract Student 2 from Description if available
+                        string student2 = "Individual Project";
+                        if (!string.IsNullOrEmpty(proj.Description) && proj.Description.Contains("Partner:"))
+                        {
+                            // Splits "Domain: X. Partner: Name (Reg)" to get just the Partner part
+                            var parts = proj.Description.Split("Partner:");
+                            if (parts.Length > 1)
+                            {
+                                student2 = parts[1].Trim(); // Result: "Name (Reg)"
+                            }
+                        }
+
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="mb-1">
+                                        <i class="fas fa-user text-secondary me-2"></i>
+                                        <strong>@proj.Student?.FullName</strong>
+                                        <span class="text-muted small ms-1">(@proj.Student1RegNo)</span>
+                                    </div>
+                                @if (student2 != "Individual Project")
+                                {
+                                            <div class="border-top pt-1 mt-1">
+                                                <i class="fas fa-user-friends text-secondary me-2"></i>
+                                                <span class="text-dark small">@student2</span>
+                                            </div>
+                                }
+                                </td>
+
+                                <td class="fw-bold text-theme-teal">@proj.Title</td>
+                                <td><small class="text-muted">@(proj.Supervisor?.FullName ?? "Not Assigned")</small></td>
+
+                                <td class="text-center fw-bold">
+                                @(grade?.TotalMarks != null ? grade.TotalMarks.ToString() : "-")
+                                </td>
+
+                                <td class="text-center">
+                                @if (grade?.Grade != null)
+                                {
+                                    string badgeColor = "bg-secondary";
+                                    if (grade.Grade.StartsWith("A")) badgeColor = "bg-success";
+                                    else if (grade.Grade.StartsWith("B")) badgeColor = "bg-primary";
+                                    else if (grade.Grade.StartsWith("C")) badgeColor = "bg-info text-dark";
+                                    else if (grade.Grade == "F") badgeColor = "bg-danger";
+
+                                            <span class="badge @badgeColor" style="width: 40px;">@grade.Grade</span>
+                                }
+                                else
+                                {
+                                            <span class="badge bg-light text-muted border">Pending</span>
+                                }
+                                </td>
+                            </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

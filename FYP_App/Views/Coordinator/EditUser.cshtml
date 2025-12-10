@@ -1,0 +1,37 @@
+﻿@model FYP_App.Models.UserEditViewModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Edit User Details</h5>
+        </div>
+        <div class="card-body p-4">
+
+            <form asp-action="EditUser" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label fw-bold">Full Name</label>
+                    <input asp-for="FullName" class="form-control" placeholder="John Doe" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Email" class="form-label fw-bold">Email Address</label>
+                    <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                    <div class="form-text text-muted">Changing the email will also change the login username.</div>
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="ManageUsers" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container mt-5 text-center">
+    <div class="card shadow-lg border-0 mx-auto" style="max-width: 600px;">
+        <div class="card-body p-5">
+            <div class="mb-4">
+                <i class="fas fa-exclamation-triangle fa-5x text-danger"></i>
+            </div>
+
+            <h2 class="text-danger fw-bold mb-3">
+                @(ViewBag.ErrorTitle ?? "Something went wrong!")
+            </h2>
+
+            <p class="lead text-muted mb-4">
+                @(ViewBag.ErrorMessage ?? "An unexpected error occurred while processing your request.")
+            </p>
+
+            <div class="alert alert-light border small text-muted mb-4">
+                If the problem persists, please contact the System Administrator.
+            </div>
+
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary px-4 fw-bold">
+                <i class="fas fa-home me-2"></i>Return to Home
+            </a>
+        </div>
+    </div>
+</div>

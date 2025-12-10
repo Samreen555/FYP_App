@@ -1,0 +1,110 @@
+﻿@model IEnumerable<FYP_App.Models.Panel>
+@{
+    ViewData["Title"] = "Manage Defense Panels";
+}
+
+<style>
+    /* Coordinator Slate Purple Theme */
+    .bg-theme { background-color: #7B7D9C; color: white; }
+    .text-theme { color: #7B7D9C; }
+    .btn-theme { background-color: #7B7D9C; color: white; border: none; }
+    .btn-theme:hover { background-color: #6a6c8a; color: white; }
+
+    /* Role Badges */
+    .badge-internal { background-color: #17a2b8; color: white; } 
+    .badge-external { background-color: #dc3545; color: white; } 
+    .badge-supervisor { background-color: #ffc107; color: #212529; } 
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-users-cog me-2 text-theme"></i>Defense Panels</h4>
+        <button class="btn btn-theme shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#createPanelModal">
+            <i class="fas fa-plus-circle me-2"></i>Create New Panel
+        </button>
+    </div>
+
+    <div class="row">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-light text-center border">No panels created yet.</div>
+        }
+
+        @foreach (var panel in Model)
+        {
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white pt-3 d-flex justify-content-between align-items-center">
+
+                            <div class="d-flex align-items-center">
+                                <h5 class="fw-bold text-dark mb-0 me-2">@panel.Name</h5>
+                            @if (panel.HODApproval)
+                            {
+                                        <span class="badge bg-success" title="Approved by HOD">Approved</span>
+                            }
+                            else
+                            {
+                                        <span class="badge bg-warning text-dark" title="Waiting for HOD Approval">Pending</span>
+                            }
+                            </div>
+
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v text-secondary"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a asp-action="EditPanel" asp-route-id="@panel.Id" class="dropdown-item">
+                                            <i class="fas fa-edit me-2 text-primary"></i>Edit Panel
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form asp-action="DeletePanel" method="post" onsubmit="return confirm('Delete this panel?');">
+                                            <input type="hidden" name="id" value="@panel.Id" />
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-trash me-2"></i>Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <label class="small text-muted fw-bold text-uppercase mb-2">Members</label>
+                            <ul class="list-group list-group-flush">
+                            @foreach (var member in panel.Members)
+                            {
+                                        <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-user-tie text-secondary me-2"></i>@member.User.FullName</span>
+
+                                    @if (member.Role == "Internal")
+                                    {
+                                        <span class="badge badge-internal">Internal</span>
+                                    }
+                                    else if (member.Role == "External")
+                                    {
+                                        <span class="badge badge-external">External</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-dark border">Member</span>
+                                    }
+                                        </li>
+                            }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+        }
+    </div>
+</div>

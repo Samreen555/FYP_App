@@ -1,0 +1,187 @@
+﻿@model FYP_App.Models.Project
+@{
+    ViewData["Title"] = "Submission Center";
+}
+
+<style>
+    
+    .header-inactive { background-color: #6c757d; color: white; }
+    .header-active { background-color: #198754; color: white; }   
+    .header-expired { background-color: #dc3545; color: white; }  
+
+    .btn-theme-blue { background-color: #4A69BD; color: white; border:none; }
+    .btn-theme-blue:hover { background-color: #3c559c; color: white; }
+
+    .feedback-label { font-size: 0.75rem; font-weight: bold; color: #6c757d; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .feedback-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 8px; font-size: 0.85rem; min-height: 40px; }
+    .feedback-section { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-layer-group me-2" style="color:#4A69BD"></i>Submission Center</h4>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+
+    @{ 
+        var settings = ViewBag.Settings as FYP_App.Models.GlobalSettings;
+        var grade = ViewBag.Grade as FYP_App.Models.ProjectGrade;
+        
+        var allEvals = ViewBag.Evaluations as List<FYP_App.Models.DefenseEvaluation>;
+    }
+
+    @RenderSubmissionSection("Proposal", settings?.ProposalDeadline, Model.Submissions, allEvals)
+
+    @RenderSubmissionSection("SRS Document", settings?.SRSDeadline, Model.Submissions, allEvals)
+
+    @RenderSubmissionSection("SDS Document", settings?.SDSDeadline, Model.Submissions, allEvals)
+
+    @RenderSubmissionSection("Final Report", settings?.FinalReportDeadline, Model.Submissions, allEvals)
+
+</div>
+
+@functions {
+    public Microsoft.AspNetCore.Html.IHtmlContent RenderSubmissionSection(
+        string type,
+        DateTime? deadline,
+        IEnumerable<FYP_App.Models.Submission> submissions,
+        List<FYP_App.Models.DefenseEvaluation> allEvals)
+    {
+        var sub = submissions?.Where(s => s.SubmissionType == type).OrderByDescending(s => s.SubmittedAt).FirstOrDefault();
+        bool isDeadlineSet = deadline != null;
+        bool isExpired = isDeadlineSet && deadline < DateTime.Now;
+
+        
+        string defenseType = "";
+        if (type == "Proposal") defenseType = "Proposal Defense";
+        else if (type == "SRS Document") defenseType = "Initial Defense";
+        else if (type == "SDS Document") defenseType = "Midterm Defense";
+        else if (type == "Final Report") defenseType = "Final Defense";
+
+        
+        var phaseFeedbacks = allEvals != null
+            ? allEvals.Where(e => e.DefenseType == defenseType).ToList()
+            : new List<FYP_App.Models.DefenseEvaluation>();
+
+
+        string headerClass = "header-inactive";
+        if (isDeadlineSet)
+        {
+            if (isExpired) { headerClass = "header-expired"; }
+            else { headerClass = "header-active"; }
+        }
+
+        var sb = new System.Text.StringBuilder();
+
+        sb.Append($"<div class='card shadow border-0 mb-4'>");
+        sb.Append($"<div class='card-header {headerClass} d-flex justify-content-between align-items-center'>");
+        sb.Append($"<h6 class='mb-0 fw-bold'><i class='fas fa-file-alt me-2'></i>{type}</h6>");
+        if (isDeadlineSet)
+        {
+            sb.Append($"<span class='badge bg-white text-dark'>Due: {deadline.Value.ToString("dd MMM yyyy")}</span>");
+        }
+        else
+        {
+            sb.Append($"<span class='badge bg-light text-dark'>Date Pending</span>");
+        }
+        sb.Append("</div>");
+
+        sb.Append("<div class='card-body'><div class='row'>");
+
+        // LEFT COL: UPLOAD ACTION
+        sb.Append("<div class='col-md-4 border-end'>");
+        if (sub != null)
+        {
+            string badgeColor = sub.Status == "Approved" ? "bg-success" : (sub.Status == "Rejected" ? "bg-danger" : "bg-warning text-dark");
+            sb.Append($"<div class='mb-3'><span class='badge {badgeColor}'>{sub.Status}</span> <small class='text-muted ms-2'>Submitted: {sub.SubmittedAt.ToString("MMM dd")}</small></div>");
+            sb.Append($"<a href='{sub.FilePath}' class='btn btn-sm btn-outline-primary w-100 mb-2' download><i class='fas fa-download me-1'></i>Download File</a>");
+
+            if (sub.Status != "Approved")
+            {
+                sb.Append($"<form action='/Student/DeleteSubmission' method='post' onsubmit='return confirm(\"Are you sure?\");'>");
+                sb.Append($"<input type='hidden' name='id' value='{sub.Id}' />");
+                sb.Append($"<button type='submit' class='btn btn-sm btn-outline-danger w-100'><i class='fas fa-trash me-1'></i>Delete Submission</button></form>");
+            }
+        }
+        else
+        {
+            if (isDeadlineSet && !isExpired)
+            {
+                sb.Append($"<form action='/Student/UploadDocument' method='post' enctype='multipart/form-data'>");
+                sb.Append($"<input type='hidden' name='Type' value='{type}' />");
+                sb.Append($"<label class='form-label small fw-bold text-muted'>Select File (PDF/Docx)</label>");
+                sb.Append($"<input type='file' name='file' class='form-control form-control-sm mb-2' required />");
+                sb.Append($"<button type='submit' class='btn btn-sm btn-theme-blue w-100'>Upload Document</button></form>");
+            }
+            else if (isExpired) { sb.Append("<div class='text-danger small fw-bold'><i class='fas fa-lock me-1'></i>Deadline Passed</div>"); }
+            else { sb.Append("<div class='text-muted small fst-italic'>Upload unavailable until deadline is set.</div>"); }
+        }
+        sb.Append("</div>");
+
+        
+        sb.Append("<div class='col-md-8 ps-4'>");
+
+        
+        sb.Append("<div class='row feedback-section'>");
+
+        sb.Append("<div class='col-md-6'>");
+        sb.Append("<span class='feedback-label'>Supervisor Remarks</span>");
+        string supRemarks = (sub != null && !string.IsNullOrEmpty(sub.Remarks)) ? sub.Remarks : "-";
+        sb.Append($"<div class='feedback-box'>{supRemarks}</div>");
+        sb.Append("</div>");
+
+        sb.Append("<div class='col-md-6'>");
+        sb.Append("<span class='feedback-label'>Coordinator Remarks</span>");
+        sb.Append($"<div class='feedback-box'>-</div>");
+        sb.Append("</div>");
+
+        sb.Append("</div>");
+
+        
+        sb.Append("<div>");
+        sb.Append("<span class='feedback-label mb-2'>Defense Panel Feedback</span>");
+        sb.Append("<div class='row g-2'>");
+
+        int membersCount = (type == "Final Report") ? 2 : 3;
+        string[] labels = (type == "Final Report")
+            ? new[] { "Internal Examiner", "External Examiner" }
+            : new[] { "Member 1", "Member 2", "Member 3" };
+
+        for (int i = 0; i < membersCount; i++)
+        {
+            string colClass = (membersCount == 3) ? "col-md-4" : "col-md-6";
+
+            sb.Append($"<div class='{colClass}'>");
+            sb.Append($"<div class='feedback-box text-center'>");
+            sb.Append($"<strong class='d-block small text-secondary border-bottom pb-1 mb-1'>{labels[i]}</strong>");
+
+            
+            string pFeed = "-";
+            if (phaseFeedbacks.Count > i)
+            {
+                pFeed = phaseFeedbacks[i].Feedback; 
+            }
+            
+
+            sb.Append($"<span class='text-muted fst-italic'>{pFeed}</span>");
+            sb.Append("</div></div>");
+        }
+
+        sb.Append("</div></div>");
+        sb.Append("</div>");
+
+        sb.Append("</div></div></div>");
+
+        return Html.Raw(sb.ToString());
+    }
+}

@@ -1,0 +1,250 @@
+﻿@model FYP_App.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Select Role";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FYP Management System - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .main-container {
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #2c3e50;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Card Styling */
+        .role-card {
+            border: none;
+            border-radius: 15px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+            height: auto;
+            width: 100%;
+        }
+
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .role-card.active {
+            border: 2px solid #3498db;
+            transform: scale(1.02);
+        }
+
+        /* Header section of the card */
+        .card-header-custom {
+            padding: 2rem;
+            text-align: center;
+            height: 100%; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #34495e;
+            transition: color 0.3s;
+        }
+
+        .role-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2c3e50;
+            min-height: 3rem; 
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            line-height: 1.2;
+        }
+
+        .role-student .role-icon { color: #3498db; }
+        .role-supervisor .role-icon { color: #e67e22; }
+        .role-coordinator .role-icon { color: #9b59b6; }
+        .role-panel .role-icon { color: #e74c3c; }
+        .role-hod .role-icon { color: #2ecc71; }
+
+        /* Login Form */
+        .login-form-container {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        .role-card.active .login-form-container {
+            max-height: 400px;
+            opacity: 1;
+            padding: 1.5rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="page-title">
+            <h1><i class="fas fa-university"></i> FYP Management Portal</h1>
+            <p class="text-muted">Select your role to sign in</p>
+        </div>
+
+        <div class="row justify-content-center g-4 align-items-start">
+
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="role-card role-student" onclick="toggleCard(this)">
+                    <div class="card-header-custom">
+                        <i class="fas fa-user-graduate role-icon"></i>
+                        <div class="role-title">Student</div>
+                    </div>
+                    <div class="login-form-container" onclick="event.stopPropagation()">
+                        <form asp-action="Login" method="post">
+                            <input type="hidden" asp-for="Role" value="Student" />
+                            <div class="mb-3"><input asp-for="Email" class="form-control" placeholder="Email" required /></div>
+                            <div class="mb-3"><input asp-for="Password" class="form-control" placeholder="Password" required /></div>
+                            <button type="submit" class="btn btn-primary btn-login">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="role-card role-supervisor" onclick="toggleCard(this)">
+                    <div class="card-header-custom">
+                        <i class="fas fa-chalkboard-teacher role-icon"></i>
+                        <div class="role-title">Supervisor</div>
+                    </div>
+                    <div class="login-form-container" onclick="event.stopPropagation()">
+                        <form asp-action="Login" method="post">
+                            <input type="hidden" asp-for="Role" value="Supervisor" />
+                            <div class="mb-3"><input asp-for="Email" class="form-control" placeholder="Email" required /></div>
+                            <div class="mb-3"><input asp-for="Password" class="form-control" placeholder="Password" required /></div>
+                            <button type="submit" class="btn btn-warning text-white btn-login">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="role-card role-coordinator" onclick="toggleCard(this)">
+                    <div class="card-header-custom">
+                        <i class="fas fa-user-tie role-icon"></i>
+                        <div class="role-title">Coordinator</div>
+                    </div>
+                    <div class="login-form-container" onclick="event.stopPropagation()">
+                        <form asp-action="Login" method="post">
+                            <input type="hidden" asp-for="Role" value="Coordinator" />
+                            <div class="mb-3"><input asp-for="Email" class="form-control" placeholder="Email" required /></div>
+                            <div class="mb-3"><input asp-for="Password" class="form-control" placeholder="Password" required /></div>
+                            <button type="submit" class="btn text-white btn-login" style="background-color: #9b59b6;">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="role-card role-panel" onclick="toggleCard(this)">
+                    <div class="card-header-custom">
+                        <i class="fas fa-gavel role-icon"></i>
+                        <div class="role-title">Defense Panel</div>
+                    </div>
+                    <div class="login-form-container" onclick="event.stopPropagation()">
+                        <form asp-action="Login" method="post">
+                            <input type="hidden" asp-for="Role" value="Panel" />
+                            <div class="mb-3"><input asp-for="Email" class="form-control" placeholder="Email" required /></div>
+                            <div class="mb-3"><input asp-for="Password" class="form-control" placeholder="Password" required /></div>
+                            <button type="submit" class="btn btn-danger btn-login">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="role-card role-hod" onclick="toggleCard(this)">
+                    <div class="card-header-custom">
+                        <i class="fas fa-building role-icon"></i>
+                        <div class="role-title">HOD</div>
+                    </div>
+                    <div class="login-form-container" onclick="event.stopPropagation()">
+                        <form asp-action="Login" method="post">
+                            <input type="hidden" asp-for="Role" value="HOD" />
+                            <div class="mb-3"><input asp-for="Email" class="form-control" placeholder="Email" required /></div>
+                            <div class="mb-3"><input asp-for="Password" class="form-control" placeholder="Password" required /></div>
+                            <button type="submit" class="btn btn-success btn-login">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8 text-center">
+                <p class="text-muted mb-3" style="font-size: 1.1rem;">Haven't registered your group for this session yet?</p>
+                <a asp-controller="Account" asp-action="RegisterGroup" class="btn btn-outline-dark btn-lg px-5 rounded-pill fw-bold shadow-sm" style="background-color:white; border:none; color:#2c3e50;">
+                    <i class="fas fa-user-plus me-2"></i> Register New Group
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleCard(element) {
+            const allCards = document.querySelectorAll('.role-card');
+            allCards.forEach(card => {
+                if (card !== element) card.classList.remove('active');
+            });
+            element.classList.toggle('active');
+            if (element.classList.contains('active')) {
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>

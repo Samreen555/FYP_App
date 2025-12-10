@@ -1,0 +1,154 @@
+﻿@{
+    ViewData["Title"] = ViewBag.Type + " Grading Sheet";
+}
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-clipboard-list me-2"></i>@ViewBag.Type Grading Sheet</h4>
+
+        <div class="btn-group">
+            <a asp-action="GradingSheet" asp-route-type="Initial" class="btn btn-outline-dark @(ViewBag.Type == "Initial" ? "active" : "")">Initial</a>
+            <a asp-action="GradingSheet" asp-route-type="Midterm" class="btn btn-outline-dark @(ViewBag.Type == "Midterm" ? "active" : "")">Midterm</a>
+            <a asp-action="GradingSheet" asp-route-type="Final" class="btn btn-outline-dark @(ViewBag.Type == "Final" ? "active" : "")">Final & Aggregate</a>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th class="ps-4">Project Details</th>
+                        @if (ViewBag.Type == "Final")
+                        {
+                                <th class="text-center">Defense Date</th>
+                                <th class="text-center">Supervisor (30)</th>
+                                <th class="text-center">Internal (15)</th>
+                                <th class="text-center">External (15)</th>
+                                <th class="text-center bg-light text-dark border-start border-end">Coordinator (10)</th>
+                                <th class="text-center">Total (100)</th>
+                                <th class="text-center">Grade</th>
+                        }
+                        else
+                        {
+                                <th class="text-center">Marks (15)</th>
+                        }
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        // Get the Schedules passed from Controller
+                        var schedules = ViewBag.Schedules as IEnumerable<FYP_App.Models.DefenseSchedule>;
+                        var today = DateTime.Today;
+                    }
+
+                    @foreach (dynamic item in Model)
+                    {
+                        var proj = item.Project as FYP_App.Models.Project;
+                        var grade = item.Grade as FYP_App.Models.ProjectGrade;
+
+                        // --- LOGIC: CHECK IF EDITABLE ---
+                        bool isEditable = true;
+                        string dateBadge = "";
+
+                        // Only apply strict locking for Final Defense
+                        if (ViewBag.Type == "Final")
+                        {
+                            var def = schedules?.FirstOrDefault(s => s.ProjectId == proj.Id);
+                            if (def != null)
+                            {
+                                dateBadge = def.Date.ToString("dd MMM");
+                                // Unlock ONLY if today matches the defense date
+                                isEditable = (def.Date.Date == today);
+                            }
+                            else
+                            {
+                                dateBadge = "Not Scheduled";
+                                isEditable = false;
+                            }
+                        }
+                        // --------------------------------
+
+                            <tr>
+                                <td class="ps-4">
+                                    <strong>@proj.Title</strong><br/>
+                                    <small class="text-muted">@proj.Student?.FullName</small>
+                                </td>
+
+                                <form asp-action="UpdateGrades" method="post">
+                                    <input type="hidden" name="projectId" value="@proj.Id" />
+                                    <input type="hidden" name="type" value="@ViewBag.Type" />
+
+                                @if (ViewBag.Type == "Final")
+                                {
+                                    // Defense Date Column
+                                            <td class="text-center text-muted small">@dateBadge</td>
+
+                                    // Read-Only Columns (Supervisor/Panel)
+                                            <td class="text-center text-muted">@(grade?.SupervisorMarks ?? 0)</td>
+                                            <td class="text-center text-muted">@(grade?.FinalInternalMarks ?? 0)</td>
+                                            <td class="text-center text-muted">@(grade?.FinalExternalMarks ?? 0)</td>
+
+                                    // COORDINATOR INPUT (Conditionally Disabled)
+                                            <td class="text-center bg-light border-start border-end">
+                                                <input type="number" name="marks" class="form-control text-center fw-bold mx-auto" 
+                                                       style="width: 80px;" min="0" max="10" step="0.5" 
+                                                       value="@(grade?.CoordinatorMarks)" 
+                                        @(isEditable ? "" : "disabled") placeholder="-" />
+                                            </td>
+
+                                            <td class="text-center fw-bold">@(grade?.TotalMarks ?? 0)</td>
+                                            <td class="text-center"><span class="badge bg-secondary">@(grade?.Grade ?? "IP")</span></td>
+                                }
+                                else
+                                {
+                                    // Initial / Midterm Input (Always open or separate logic if needed)
+                                            <td class="text-center">
+                                                <input type="number" name="marks" class="form-control text-center mx-auto" 
+                                                       style="width: 100px;" min="0" max="15" step="0.5" 
+                                                       value="@(ViewBag.Type == "Initial" ? grade?.InitialDefenseMarks : grade?.MidtermDefenseMarks)" />
+                                            </td>
+                                }
+
+                                    <td class="text-center">
+                                    @if (isEditable)
+                                    {
+                                                <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-save"></i></button>
+                                    }
+                                    else
+                                    {
+                                                <button type="button" class="btn btn-sm btn-secondary disabled" title="Locked: Available on Defense Day only">
+                                                    <i class="fas fa-lock"></i>
+                                                </button>
+                                    }
+                                    </td>
+                                </form>
+                            </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-light small text-muted">
+            <i class="fas fa-info-circle me-1"></i> 
+            @if (ViewBag.Type == "Final")
+            {
+                <span>Final Grading is restricted to the scheduled date of the defense.</span>
+            }
+            else
+            {
+                <span>Enter marks and click save to update.</span>
+            }
+        </div>
+    </div>
+</div>

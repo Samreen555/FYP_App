@@ -1,0 +1,197 @@
+﻿@model IEnumerable<FYP_App.Models.Project>
+@{
+    ViewData["Title"] = "Supervisor Dashboard";
+}
+
+<style>
+    .bg-theme-orange { background-color: #E08E45; color: white; }
+    .text-theme-orange { color: #E08E45; }
+    .border-theme-orange { border-left: 5px solid #E08E45 !important; }
+
+    .stat-card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-5px); }
+
+    .timeline-item { border-left: 2px solid #e9ecef; padding-left: 15px; margin-bottom: 15px; position: relative; }
+    .timeline-item::before { content: ''; width: 10px; height: 10px; background: #E08E45; border-radius: 50%; position: absolute; left: -6px; top: 5px; }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+        <h2 class="h3 text-secondary"><i class="fas fa-chalkboard-teacher text-theme-orange me-2"></i>Supervisor Dashboard</h2>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-xl-4 col-md-6">
+            <div class="card stat-card border-theme-orange h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-theme-orange text-uppercase mb-1">My Assigned Groups</div>
+                            <div class="h4 mb-0 fw-bold text-dark">@ViewBag.MyProjectsCount</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300 opacity-25"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card stat-card border-left-warning h-100 py-2" style="border-left: 5px solid #f6c23e;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">Pending Reviews</div>
+                            <div class="h4 mb-0 fw-bold text-dark">@ViewBag.PendingReviews</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-file-signature fa-2x text-gray-300 opacity-25"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card stat-card border-left-info h-100 py-2" style="border-left: 5px solid #36b9cc;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-info text-uppercase mb-1">Upcoming Defenses</div>
+                            <div class="h4 mb-0 fw-bold text-dark">@ViewBag.UpcomingDefensesCount</div>
+                        </div>
+                        <div class="col-auto"><i class="fas fa-calendar-day fa-2x text-gray-300 opacity-25"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow border-0 mb-4 h-100">
+                <div class="card-header bg-theme-orange">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>My Student Groups</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4" style="width: 35%;">Project Title</th>
+                                <th style="width: 25%;">Student 1</th>
+                                <th style="width: 25%;">Student 2</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr><td colspan="4" class="text-center py-5 text-muted">No projects assigned yet.</td></tr>
+                            }
+
+                            @foreach (var item in Model)
+                            {
+
+                                string s2Name = "N/A"; string s2Reg = ""; string desc = item.Description ?? "";
+                                if (desc.Contains("Partner:"))
+                                {
+                                    try
+                                    {
+                                        string rawS2 = desc.Split("Partner:")[1].Trim();
+                                        int openParen = rawS2.LastIndexOf('(');
+                                        if (openParen > 0) { s2Name = rawS2.Substring(0, openParen).Trim(); s2Reg = rawS2.Substring(openParen).Replace("(", "").Replace(")", "").Trim(); }
+                                        else { s2Name = rawS2; }
+                                    }
+                                    catch { }
+                                }
+
+                                    <tr>
+                                        <td class="ps-4 fw-bold text-theme-orange">@item.Title</td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@(item.Student?.FullName ?? "Unknown")</div>
+                                            <div class="small text-muted">@item.Student1RegNo</div> 
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@s2Name</div>
+                                            <div class="small text-muted">@s2Reg</div> 
+                                        </td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                    </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold text-secondary"><i class="fas fa-calendar-alt me-2 text-info"></i>Upcoming Defenses</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.DefenseList == null || ((IEnumerable<dynamic>)ViewBag.DefenseList).Count() == 0)
+                    {
+                            <small class="text-muted">No upcoming defenses scheduled.</small>
+                    }
+                    else
+                    {
+                        @foreach (var def in ViewBag.DefenseList as IEnumerable<FYP_App.Models.DefenseSchedule>)
+                        {
+                                    <div class="timeline-item">
+                                        <strong class="d-block text-dark">@def.DefenseType</strong>
+                                        <span class="small text-muted d-block"><i class="fas fa-clock me-1"></i> @def.Date.ToString("MMM dd, hh:mm tt")</span>
+                                        <span class="small text-muted"><i class="fas fa-map-marker-alt me-1"></i> @def.Room (@def.Project.Title)</span>
+                                    </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-bold text-secondary"><i class="fas fa-hourglass-half me-2 text-danger"></i>System Deadlines</h6>
+                </div>
+                <div class="card-body">
+                    @{
+                        var d = ViewBag.SystemDeadlines as FYP_App.Models.GlobalSettings;
+                    }
+                    @if (d != null)
+                    {
+                            <div class="mb-3 border-bottom pb-2">
+                                <div class="d-flex justify-content-between">
+                                    <small class="fw-bold">Proposal</small>
+                                    <small class="@(d.ProposalDeadline < DateTime.Now ? "text-danger" : "text-success")">
+                                    @(d.ProposalDeadline?.ToString("dd MMM") ?? "Not Set")
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="mb-3 border-bottom pb-2">
+                                <div class="d-flex justify-content-between">
+                                    <small class="fw-bold">SRS Doc</small>
+                                    <small class="@(d.SRSDeadline < DateTime.Now ? "text-danger" : "text-success")">
+                                    @(d.SRSDeadline?.ToString("dd MMM") ?? "Not Set")
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="mb-3 border-bottom pb-2">
+                                <div class="d-flex justify-content-between">
+                                    <small class="fw-bold">Meeting Logs</small>
+                                    <small class="@(d.MeetingLogDeadline < DateTime.Now ? "text-danger" : "text-success")">
+                                    @(d.MeetingLogDeadline?.ToString("dd MMM") ?? "Not Set")
+                                    </small>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="fw-bold">Final Report</small>
+                                    <small class="@(d.FinalReportDeadline < DateTime.Now ? "text-danger" : "text-success")">
+                                    @(d.FinalReportDeadline?.ToString("dd MMM") ?? "Not Set")
+                                    </small>
+                                </div>
+                            </div>
+                    }
+                    else
+                    {
+                            <small class="text-muted">No deadlines set by Coordinator.</small>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

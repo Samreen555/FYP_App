@@ -1,0 +1,134 @@
+﻿@model IEnumerable<FYP_App.Models.Project>
+@{
+    ViewData["Title"] = "Manage Projects";
+}
+
+<style>
+    .bg-theme { background-color: #7B7D9C; color: white; } /* Slate Lavender */
+    .text-theme { color: #7B7D9C; }
+    .btn-theme { background-color: #7B7D9C; color: white; border:none; }
+    .btn-theme:hover { background-color: #636585; color: white; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-theme d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Registered Groups & Projects</h5>
+            <span class="badge bg-white text-dark">@Model.Count()</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Project Title</th>
+                        <th>Student Leader</th>
+                        <th>Supervisor</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-5 text-muted">No approved projects yet. Go to 'Pending Registrations' to approve a group.</td></tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                            <tr>
+                                <td class="ps-4 fw-bold" style="max-width: 300px;">
+                                @item.Title
+                                    <br/><small class="text-muted fw-normal" style="font-size:0.8rem">@item.Description</small>
+                                </td>
+                                <td>
+                                @if (item.Student != null)
+                                { 
+                                            <span>@item.Student.FullName</span>
+
+                                    <br/>
+                                            <small class="text-muted">@item.Student.Email</small>
+                                }
+                                else
+                                {
+                                    <span class="text-danger">No Student Account</span>
+                                }
+                                </td>
+                                <td>
+                                @if (item.Supervisor != null)
+                                {
+                                            <span class="text-success fw-bold"><i class="fas fa-user-tie me-1"></i>@item.Supervisor.FullName</span>
+                                }
+                                else
+                                {
+                                            <span class="text-warning small fw-bold"><i class="fas fa-exclamation-circle me-1"></i>Unassigned</span>
+                                }
+                                </td>
+                                <td>
+                                @if (item.SupervisorId == null)
+                                {
+                                    <span class="badge bg-secondary">Pending Supervisor</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                            data-bs-toggle="modal" data-bs-target="#assignModal-@item.Id">
+                                        <i class="fas fa-user-plus me-1"></i> Assign
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="assignModal-@item.Id" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-action="AssignSupervisor" method="post">
+                                            <div class="modal-header bg-light">
+                                                <h5 class="modal-title">Assign Supervisor</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Assigning supervisor for: <strong>@item.Title</strong></p>
+                                                <input type="hidden" name="projectId" value="@item.Id" />
+
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Select Supervisor</label>
+                                                    <select name="supervisorId" class="form-select" required>
+                                                        <option value="">Choose Faculty...</option>
+                                                    @if (ViewBag.Supervisors != null)
+                                                    {
+                                                        @foreach (var sup in ViewBag.Supervisors as IList<FYP_App.Models.ApplicationUser>)
+                                                        {
+                                                                        <option value="@sup.Id">@sup.FullName</option>
+                                                        }
+                                                    }
+                                                    </select>
+                                                    <small class="text-muted">Only users with 'Supervisor' role appear here.</small>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-theme">Confirm Assignment</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,188 @@
+﻿@model IEnumerable<FYP_App.Models.DefenseSchedule>
+@{
+    ViewData["Title"] = "Schedule Defense";
+}
+
+<style>
+    
+    .bg-theme-purple { background-color: #7B7D9C; color: white; }
+    .text-theme-purple { color: #7B7D9C; }
+
+    
+    .btn-theme-purple { 
+        background-color: #7B7D9C !important; 
+        color: white !important; 
+        border: none; 
+    }
+    .btn-theme-purple:hover { 
+        background-color: #6a6c8a !important; 
+        color: white !important; 
+    }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-calendar-alt me-2 text-theme-purple"></i>Defense Schedule</h4>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-theme-purple">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-plus me-2"></i>New Schedule</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateSchedule" method="post">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Project</label>
+                            <select name="ProjectId" class="form-select" required>
+                                <option value="">-- Select Project --</option>
+                                @foreach (var p in ViewBag.Projects as List<FYP_App.Models.Project>)
+                                {
+                                        <option value="@p.Id">@p.Title (@p.Student?.FullName)</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Panel</label>
+                            <select name="PanelId" class="form-select" required>
+                                <option value="">-- Select Panel --</option>
+                                @foreach (var p in ViewBag.Panels as List<FYP_App.Models.Panel>)
+                                {
+                                        <option value="@p.Id">@p.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Defense Type</label>
+                            <select name="DefenseType" class="form-select" required>
+                                <option value="Proposal Defense">Proposal Defense</option>
+                                <option value="Initial Defense">Initial Defense</option>
+                                <option value="Midterm Defense">Midterm Defense</option>
+                                <option value="Final Defense">Final Defense</option>
+                            </select>
+                            <div class="form-text small">Must be scheduled in sequence.</div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Date & Time</label>
+                                <input type="datetime-local" name="Date" class="form-control" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Room / Venue</label>
+                                <input type="text" name="Room" class="form-control" placeholder="Lab 1" required />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-theme-purple w-100 fw-bold shadow-sm">
+                            Schedule Defense
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 fw-bold text-secondary">Upcoming Defenses</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Date</th>
+                                <th>Project</th>
+                                <th>Type</th>
+                                <th>Room</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Any())
+                            {
+                                <tr><td colspan="5" class="text-center py-5 text-muted">No defenses scheduled.</td></tr>
+                            }
+
+                            @foreach (var item in Model)
+                            {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <strong>@item.Date.ToString("dd MMM")</strong><br/>
+                                            <small class="text-muted">@item.Date.ToString("hh:mm tt")</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold">@item.Project.Title</span><br/>
+                                            <small class="text-secondary">@item.Panel.Name</small>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border">@item.DefenseType</span></td>
+                                        <td>@item.Room</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editSchedule-@item.Id">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <form asp-action="DeleteSchedule" method="post" onsubmit="return confirm('Remove this schedule?');">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <div class="modal fade" id="editSchedule-@item.Id" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form asp-action="EditSchedule" method="post">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Edit Schedule</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <input type="hidden" name="id" value="@item.Id" />
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Project</label>
+                                                            <input type="text" class="form-control" value="@item.Project.Title" disabled readonly />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">Date & Time</label>
+                                                            <input type="datetime-local" name="Date" class="form-control" 
+                                                                   value="@item.Date.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">Room</label>
+                                                            <input type="text" name="Room" class="form-control" value="@item.Room" required />
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

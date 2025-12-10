@@ -1,0 +1,69 @@
+﻿@model IEnumerable<FYP_App.Models.DocumentTemplate>
+@{
+    ViewData["Title"] = "Download Templates";
+}
+
+<style>
+    /* Slate Blue Theme */
+    .bg-theme-blue { background-color: #4A69BD; color: white; }
+    .text-theme-blue { color: #4A69BD; }
+    .btn-outline-blue { color: #4A69BD; border-color: #4A69BD; }
+    .btn-outline-blue:hover { background-color: #4A69BD; color: white; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-file-download me-2" style="color:#4A69BD"></i>Resources & Templates</h4>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-theme-blue">
+            <h6 class="mb-0 fw-bold"><i class="fas fa-copy me-2"></i>Available Documents</h6>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4" style="width: 25%;">Template Title</th>
+                        <th style="width: 40%;">Description</th>
+                        <th style="width: 15%;">Date Uploaded</th>
+                        <th style="width: 20%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="fas fa-folder-open fa-2x mb-2 opacity-50"></i><br/>
+                                    No templates uploaded by the Coordinator yet.
+                                </td>
+                            </tr>
+                    }
+
+                    @foreach (var item in Model)
+                    {
+                            <tr>
+                                <td class="ps-4 fw-bold text-dark">
+                                    <i class="far fa-file-pdf text-danger me-2"></i> @item.Title
+                                </td>
+                                <td class="text-muted small">
+                                @(string.IsNullOrEmpty(item.Description) ? "-" : item.Description)
+                                </td>
+                                <td class="text-muted small">
+                                @item.UploadedAt.ToString("MMM dd, yyyy")
+                                </td>
+                                <td>
+                                    <a href="@item.FilePath" class="btn btn-sm btn-outline-blue fw-bold" download>
+                                        <i class="fas fa-download me-1"></i> Download
+                                    </a>
+                                </td>
+                            </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

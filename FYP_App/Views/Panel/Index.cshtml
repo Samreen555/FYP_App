@@ -1,0 +1,99 @@
+﻿@model IEnumerable<FYP_App.Models.DefenseSchedule>
+@{
+    ViewData["Title"] = "My Defense Panel";
+}
+
+<style>
+    .bg-theme-red { background-color: #e55039; color: white; }
+    .text-theme-red { color: #e55039; }
+    .btn-theme-red { background-color: #e55039; color: white; border: none; }
+    .btn-theme-red:hover { background-color: #b33925; color: white; }
+</style>
+
+<div class="container-fluid mt-4">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-secondary"><i class="fas fa-gavel me-2 text-theme-red"></i>My Defense Duties</h4>
+    </div>
+
+    @if (!Model.Any())
+    {
+            <div class="alert alert-info shadow-sm border-0">
+                <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>No Defenses Found</h5>
+                <p>You currently have no defenses assigned. This happens if:</p>
+                <ul>
+                    <li>You have not been added to any <strong>Defense Panel</strong> by the Coordinator.</li>
+                    <li>The Coordinator has not <strong>Scheduled</strong> any defenses for your panel yet.</li>
+                </ul>
+            </div>
+    }
+    else
+    {
+            <div class="card shadow border-0">
+                <div class="card-header bg-theme-red">
+                    <h6 class="mb-0 fw-bold">Scheduled Defenses</h6>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Date & Time</th>
+                                <th>Project Title</th>
+                                <th>Defense Type</th>
+                                <th>Venue</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @{
+                            var myEvals = ViewBag.MyEvaluations as List<FYP_App.Models.DefenseEvaluation>;
+                        }
+
+                        @foreach (var item in Model)
+                        {
+                            
+                            bool isGraded = myEvals != null && myEvals.Any(e => e.ProjectId == item.ProjectId && e.DefenseType == item.DefenseType);
+
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex flex-column">
+                                                <span class="fw-bold text-dark">@item.Date.ToString("dd MMM yyyy")</span>
+                                                <small class="text-muted">@item.Date.ToString("hh:mm tt")</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark">@item.Project.Title</span><br/>
+                                            <small class="text-muted"><i class="fas fa-user-graduate me-1"></i>@item.Project.Student?.FullName</small>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border">@item.DefenseType</span></td>
+                                        <td><small class="text-secondary">@item.Room</small></td>
+                                        <td>
+                                    @if (isGraded)
+                                    {
+                                                    <button class="btn btn-sm btn-success disabled" style="width: 100px;">
+                                                        <i class="fas fa-check me-1"></i>Graded
+                                                    </button>
+                                    }
+                                    else
+                                    {
+                                                    <a asp-action="Evaluate" 
+                                                       asp-route-projectId="@item.ProjectId" 
+                                                       asp-route-defenseType="@item.DefenseType" 
+                                                       class="btn btn-sm btn-theme-red fw-bold shadow-sm" style="width: 100px;">
+                                                        Evaluate
+                                                    </a>
+                                    }
+                                        </td>
+                                    </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    }
+</div>
