@@ -23,12 +23,14 @@ namespace FYP_App.Data
         public DbSet<ProjectGrade> ProjectGrades { get; set; }
         public DbSet<MeetingLog> MeetingLogs { get; set; }
         public DbSet<DefenseEvaluation> DefenseEvaluations { get; set; }
-        
+
+        // ---> THIS IS THE FIX: Added the missing Notifications DbSet <---
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-           
+
             builder.Entity<UserProfile>()
                 .HasIndex(u => u.UserId)
                 .IsUnique();

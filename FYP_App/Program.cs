@@ -40,12 +40,21 @@ using (var scope = app.Services.CreateScope())
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    // app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-app.UseExceptionHandler("/Error");
-app.UseStatusCodePagesWithReExecute("/Error/{0}");
+// ========================================================
+// TEMPORARY DEBUGGING CHANGE: 
+// Commented out the friendly error pages to see the crash
+// ========================================================
+// app.UseExceptionHandler("/Error");
+// app.UseStatusCodePagesWithReExecute("/Error/{0}");
+
+app.UseDeveloperExceptionPage(); // <--- Added this to show the raw error
+
+// ========================================================
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

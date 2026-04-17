@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FYP_App.Controllers
 {
@@ -65,49 +70,63 @@ namespace FYP_App.Controllers
             string email = reg.Student1Email;
             string password = "FYP" + new Random().Next(1000, 9999) + "!";
 
-            var user = new ApplicationUser
+            // 1. CHECK IF USER ALREADY EXISTS
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
             {
-                UserName = email,
-                Email = email,
-                FullName = reg.Student1Name,
-                EmailConfirmed = true
-            };
-
-            var result = await _userManager.CreateAsync(user, password);
-
-            if (result.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(user, "Student");
-
-                var project = new Project
+                user = new ApplicationUser
                 {
-                    Title = reg.ProposedTitle,
-                    StudentId = user.Id,
-                    Status = "Approved",
-                    Student1RegNo = reg.Student1RegNo,
-                    Description = $"Domain: {reg.ProposedDomain}. Partner: {reg.Student2Name} ({reg.Student2RegNo})",
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    UserName = email,
+                    Email = email,
+                    FullName = reg.Student1Name,
+                    EmailConfirmed = true
                 };
 
-                _context.Projects.Add(project);
-
-                reg.IsProcessed = true;
-                _context.Update(reg);
-                await _context.SaveChangesAsync();
-
-                TempData["NewEmail"] = email;
-                TempData["NewPassword"] = password;
-                TempData["NewName"] = reg.Student1Name;
-
-                return RedirectToAction("ShowCredentials");
+                var result = await _userManager.CreateAsync(user, password);
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    TempData["Error"] = $"Failed to create user: {errors}";
+                    return RedirectToAction("PendingRegistrations");
+                }
+                await _userManager.AddToRoleAsync(user, "Student");
             }
             else
             {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                TempData["Error"] = $"Failed: {errors}";
-                return RedirectToAction("PendingRegistrations");
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                await _userManager.ResetPasswordAsync(user, token, password);
+
+                if (!await _userManager.IsInRoleAsync(user, "Student"))
+                {
+                    await _userManager.AddToRoleAsync(user, "Student");
+                }
             }
+
+            var project = new Project
+            {
+                Title = reg.ProposedTitle,
+                StudentId = user.Id,
+                Status = "Approved",
+                Student1RegNo = reg.Student1RegNo,
+                Description = $"Domain: {reg.ProposedDomain}. Partner: {reg.Student2Name} ({reg.Student2RegNo})",
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                SupervisorFlagged = false,
+                WarningMessage = ""
+            };
+
+            _context.Projects.Add(project);
+
+            reg.IsProcessed = true;
+            _context.Update(reg);
+            await _context.SaveChangesAsync();
+
+            TempData["NewEmail"] = email;
+            TempData["NewPassword"] = password;
+            TempData["NewName"] = reg.Student1Name;
+
+            return RedirectToAction("ShowCredentials");
         }
 
         [HttpGet]
@@ -132,15 +151,13 @@ namespace FYP_App.Controllers
 
             foreach (var user in allUsers)
             {
-                // FILTER: ONLY allow users in the 'Panel' role
                 bool isPanel = await _userManager.IsInRoleAsync(user, "Panel");
 
                 if (isPanel)
                 {
                     string category = "Panel Member";
-                    string badgeColor = "bg-primary"; // Default Blue
+                    string badgeColor = "bg-primary";
 
-                    // Check for Internal/External Claim
                     var claims = await _userManager.GetClaimsAsync(user);
                     var type = claims.FirstOrDefault(c => c.Type == "PanelistType")?.Value;
 
@@ -152,7 +169,7 @@ namespace FYP_App.Controllers
                     else if (type == "External")
                     {
                         category = "External Examiner";
-                        badgeColor = "bg-danger"; 
+                        badgeColor = "bg-danger";
                     }
 
                     facultyList.Add(new
@@ -170,6 +187,48 @@ namespace FYP_App.Controllers
             return View(panels);
         }
 
+        // ==========================================
+        // CREATE PANEL (GET)
+        // ==========================================
+        [HttpGet]
+        public async Task<IActionResult> CreatePanel()
+        {
+            var allUsers = await _userManager.Users.ToListAsync();
+            var facultyList = new List<dynamic>();
+
+            foreach (var user in allUsers)
+            {
+                bool isPanel = await _userManager.IsInRoleAsync(user, "Panel");
+
+                if (isPanel)
+                {
+                    string category = "Panel Member";
+                    string badgeColor = "bg-primary";
+
+                    var claims = await _userManager.GetClaimsAsync(user);
+                    var type = claims.FirstOrDefault(c => c.Type == "PanelistType")?.Value;
+
+                    if (type == "Internal") { category = "Internal Examiner"; badgeColor = "bg-info text-dark"; }
+                    else if (type == "External") { category = "External Examiner"; badgeColor = "bg-danger"; }
+
+                    facultyList.Add(new
+                    {
+                        Id = user.Id,
+                        Name = user.FullName,
+                        Email = user.Email,
+                        Category = category,
+                        Badge = badgeColor
+                    });
+                }
+            }
+
+            ViewBag.FacultyList = facultyList.OrderBy(f => f.Category).ToList();
+            return View();
+        }
+
+        // ==========================================
+        // CREATE PANEL (POST)
+        // ==========================================
         [HttpPost]
         public async Task<IActionResult> CreatePanel(string Name, List<string> MemberIds)
         {
@@ -185,19 +244,20 @@ namespace FYP_App.Controllers
 
             foreach (var userId in MemberIds)
             {
-                // Fetch the User to check their Claim (Internal/External)
                 var user = await _userManager.FindByIdAsync(userId);
-                var claims = await _userManager.GetClaimsAsync(user);
 
-                // Default to "Member" if no claim exists
-                var role = claims.FirstOrDefault(c => c.Type == "PanelistType")?.Value ?? "Member";
-
-                _context.PanelMembers.Add(new PanelMember
+                if (user != null)
                 {
-                    PanelId = panel.Id,
-                    UserId = userId,
-                    Role = role
-                });
+                    var claims = await _userManager.GetClaimsAsync(user);
+                    var role = claims.FirstOrDefault(c => c.Type == "PanelistType")?.Value ?? "Member";
+
+                    _context.PanelMembers.Add(new PanelMember
+                    {
+                        PanelId = panel.Id,
+                        UserId = userId,
+                        Role = role
+                    });
+                }
             }
             await _context.SaveChangesAsync();
 
@@ -213,9 +273,8 @@ namespace FYP_App.Controllers
         {
             ViewBag.Projects = await _context.Projects.Include(p => p.Student).ToListAsync();
 
-            // Only fetch Approved Panels
             ViewBag.Panels = await _context.Panels
-                .Where(p => p.HODApproval == true) 
+                .Where(p => p.HODApproval == true)
                 .ToListAsync();
 
             var schedules = await _context.DefenseSchedules
@@ -227,13 +286,9 @@ namespace FYP_App.Controllers
             return View(schedules);
         }
 
-        // =================================
-        // CREATE SCHEDULE (POST)
-        // ==================================
         [HttpPost]
         public async Task<IActionResult> CreateSchedule(int ProjectId, int PanelId, string DefenseType, DateTime Date, string Room)
         {
-            // 1. Verify Panel Approval
             var panel = await _context.Panels.FindAsync(PanelId);
             if (panel == null || !panel.HODApproval)
             {
@@ -241,7 +296,6 @@ namespace FYP_App.Controllers
                 return RedirectToAction("ScheduleDefense");
             }
 
-            // 2. Check for Duplicates
             var exists = await _context.DefenseSchedules
                 .AnyAsync(d => d.ProjectId == ProjectId && d.DefenseType == DefenseType);
             if (exists)
@@ -250,11 +304,31 @@ namespace FYP_App.Controllers
                 return RedirectToAction("ScheduleDefense");
             }
 
-            // 3. Sequence validation
+            // ==========================================
+            // CONFLICT ALGORITHM (ROOM & PANEL CHECK)
+            // ==========================================
+            var roomConflict = await _context.DefenseSchedules
+                .FirstOrDefaultAsync(d => d.Room.ToLower() == Room.ToLower() && d.Date == Date);
+
+            if (roomConflict != null)
+            {
+                TempData["Error"] = $"Conflict Error: Room '{Room}' is already booked at {Date:hh:mm tt} for another defense.";
+                return RedirectToAction("ScheduleDefense");
+            }
+
+            var panelConflict = await _context.DefenseSchedules
+                .FirstOrDefaultAsync(d => d.PanelId == PanelId && d.Date == Date);
+
+            if (panelConflict != null)
+            {
+                TempData["Error"] = $"Conflict Error: This Panel is already scheduled for another defense at {Date:hh:mm tt}.";
+                return RedirectToAction("ScheduleDefense");
+            }
+            // ==========================================
+
             var sequence = new List<string> { "Proposal Defense", "Initial Defense", "Midterm Defense", "Final Defense" };
             int currentIndex = sequence.IndexOf(DefenseType);
 
-            // If it's not the first one (Proposal), check the previous step
             if (currentIndex > 0)
             {
                 string prevType = sequence[currentIndex - 1];
@@ -263,21 +337,18 @@ namespace FYP_App.Controllers
                     .AsNoTracking()
                     .FirstOrDefaultAsync(d => d.ProjectId == ProjectId && d.DefenseType == prevType);
 
-                // Rule A: Previous defense must exist
                 if (prevDefense == null)
                 {
                     TempData["Error"] = $"Sequence Error: You must schedule '{prevType}' before scheduling '{DefenseType}'.";
                     return RedirectToAction("ScheduleDefense");
                 }
 
-                // Rule B: Date must be AFTER previous defense
                 if (Date <= prevDefense.Date)
                 {
                     TempData["Error"] = $"Date Error: {DefenseType} must be scheduled AFTER {prevType} ({prevDefense.Date:dd MMM yyyy}).";
                     return RedirectToAction("ScheduleDefense");
                 }
             }
-            
 
             var schedule = new DefenseSchedule
             {
@@ -290,7 +361,7 @@ namespace FYP_App.Controllers
             _context.DefenseSchedules.Add(schedule);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"{DefenseType} scheduled successfully!";
+            TempData["Success"] = $"{DefenseType} scheduled successfully without conflicts!";
             return RedirectToAction("ScheduleDefense");
         }
 
@@ -322,7 +393,6 @@ namespace FYP_App.Controllers
                 settings.SRSDeadline = model.SRSDeadline;
                 settings.SDSDeadline = model.SDSDeadline;
                 settings.FinalReportDeadline = model.FinalReportDeadline;
-                
 
                 _context.Update(settings);
                 await _context.SaveChangesAsync();
@@ -465,13 +535,10 @@ namespace FYP_App.Controllers
             {
                 await _userManager.AddToRoleAsync(user, Role);
 
-                
                 if (Role == "Panel" && !string.IsNullOrEmpty(PanelistType))
                 {
-                    
                     await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("PanelistType", PanelistType));
                 }
-                
 
                 TempData["Success"] = $"Account created for {FullName} ({Role}).";
                 return RedirectToAction("ManageUsers", new { role = Role });
@@ -499,20 +566,41 @@ namespace FYP_App.Controllers
         [HttpPost]
         public async Task<IActionResult> ReviewSubmission(int id, string decision, string remarks)
         {
-            var submission = await _context.Submissions.FindAsync(id);
+            var submission = await _context.Submissions
+                .Include(s => s.Project)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
             if (submission == null) return NotFound();
 
-            if (decision == "Approve")
+            if (decision == "Approve" || decision == "Finalize")
             {
                 submission.Status = "Approved";
                 submission.Remarks = "Coordinator Approved: " + (remarks ?? "No remarks");
-                TempData["Success"] = "Submission finalized and approved.";
+
+                TempData["Success"] = "Submission Accepted.";
+
+                var notification = new Notification
+                {
+                    UserId = submission.Project.StudentId,
+                    Message = $"Your {submission.SubmissionType} has been Finalized and Approved by the Coordinator. Submission Accepted.",
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                };
+                _context.Notifications.Add(notification);
             }
             else
             {
                 submission.Status = "Rejected";
                 submission.Remarks = "Coordinator Rejection: " + remarks;
                 TempData["Error"] = "Submission rejected.";
+
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = submission.Project.StudentId,
+                    Message = $"Your {submission.SubmissionType} was Rejected by the Coordinator. Reason: {remarks}",
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                });
             }
 
             _context.Update(submission);
@@ -526,7 +614,7 @@ namespace FYP_App.Controllers
         [HttpGet]
         public async Task<IActionResult> GradingSheet(string type)
         {
-            ViewBag.Type = type; // "Initial", "Midterm", or "Final"
+            ViewBag.Type = type;
 
             var grades = await _context.Projects
                 .Include(p => p.Student)
@@ -534,7 +622,6 @@ namespace FYP_App.Controllers
                 .GroupJoin(_context.ProjectGrades, p => p.Id, g => g.ProjectId, (p, g) => new { Project = p, Grade = g.FirstOrDefault() })
                 .ToListAsync();
 
-            // Fetch Schedules for Validation
             string defenseType = type + " Defense";
             var schedules = await _context.DefenseSchedules.Where(d => d.DefenseType == defenseType).ToListAsync();
             ViewBag.Schedules = schedules;
@@ -545,20 +632,17 @@ namespace FYP_App.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateGrades(int projectId, double marks, string type)
         {
-            // DATE VALIDATION FOR FINAL DEFENSE 
             if (type == "Final")
             {
                 var defense = await _context.DefenseSchedules
                     .FirstOrDefaultAsync(d => d.ProjectId == projectId && d.DefenseType == "Final Defense");
 
-                // If no schedule OR today is not the defense date, block grading.
                 if (defense == null || defense.Date.Date != DateTime.Today)
                 {
                     TempData["Error"] = "Action Denied: Final Grading is only open on the day of the Defense.";
                     return RedirectToAction("GradingSheet", new { type });
                 }
             }
-           
 
             var grade = await _context.ProjectGrades.FirstOrDefaultAsync(g => g.ProjectId == projectId);
 
@@ -568,12 +652,10 @@ namespace FYP_App.Controllers
                 _context.ProjectGrades.Add(grade);
             }
 
-            // Update specific marks based on the sheet type
             if (type == "Initial") grade.InitialDefenseMarks = marks;
             else if (type == "Midterm") grade.MidtermDefenseMarks = marks;
             else if (type == "Final") grade.CoordinatorMarks = marks;
 
-            
             double total = (grade.InitialDefenseMarks ?? 0) +
                            (grade.MidtermDefenseMarks ?? 0) +
                            (grade.SupervisorMarks ?? 0) +
@@ -583,7 +665,6 @@ namespace FYP_App.Controllers
 
             grade.TotalMarks = total;
 
-            // Assign Grade Letter
             if (total >= 80) grade.Grade = "A";
             else if (total >= 70) grade.Grade = "B";
             else if (total >= 60) grade.Grade = "C";
@@ -594,7 +675,7 @@ namespace FYP_App.Controllers
                 grade.SupervisorMarks == null || grade.CoordinatorMarks == null ||
                 grade.FinalInternalMarks == null)
             {
-                grade.Grade = "IP"; // IP: In Progress 
+                grade.Grade = "IP";
             }
 
             await _context.SaveChangesAsync();
@@ -658,7 +739,6 @@ namespace FYP_App.Controllers
 
             foreach (var user in allUsers)
             {
-                // Only allow users in the Panel role
                 bool isPanel = await _userManager.IsInRoleAsync(user, "Panel");
 
                 if (isPanel)
@@ -703,19 +783,20 @@ namespace FYP_App.Controllers
                 return RedirectToAction("EditPanel", new { id });
             }
 
-            // 1. Update Name
             panel.Name = Name;
 
-            // 2. Update Members 
             _context.PanelMembers.RemoveRange(panel.Members);
 
             foreach (var userId in MemberIds)
             {
                 var user = await _userManager.FindByIdAsync(userId);
-                var claims = await _userManager.GetClaimsAsync(user);
-                var role = claims.FirstOrDefault(c => c.Type == "PanelistType")?.Value ?? "Member";
+                if (user != null)
+                {
+                    var claims = await _userManager.GetClaimsAsync(user);
+                    var role = claims.FirstOrDefault(c => c.Type == "PanelistType")?.Value ?? "Member";
 
-                _context.PanelMembers.Add(new PanelMember { PanelId = panel.Id, UserId = userId, Role = role });
+                    _context.PanelMembers.Add(new PanelMember { PanelId = panel.Id, UserId = userId, Role = role });
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -729,14 +810,12 @@ namespace FYP_App.Controllers
         [HttpPost]
         public async Task<IActionResult> DeletePanel(int id)
         {
-            // 1. Fetch Panel ALONG WITH its Members
             var panel = await _context.Panels
-                .Include(p => p.Members) 
+                .Include(p => p.Members)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (panel != null)
             {
-                // 2. Check if the Panel is used in any Defense Schedule
                 bool isScheduled = await _context.DefenseSchedules.AnyAsync(ds => ds.PanelId == id);
                 if (isScheduled)
                 {
@@ -744,13 +823,11 @@ namespace FYP_App.Controllers
                     return RedirectToAction("ManagePanels");
                 }
 
-                // 3. REMOVE MEMBERS FIRST 
                 if (panel.Members.Any())
                 {
                     _context.PanelMembers.RemoveRange(panel.Members);
                 }
 
-                // 4. Now it is safe to remove the Panel
                 _context.Panels.Remove(panel);
                 await _context.SaveChangesAsync();
 
@@ -796,13 +873,13 @@ namespace FYP_App.Controllers
             }
             return RedirectToAction("ScheduleDefense");
         }
+
         // ==============================
         // SUPERVISOR ALERTS (REPORTED BY HOD)
         // ==============================
         [HttpGet]
         public async Task<IActionResult> SupervisorAlerts()
         {
-            
             var reportedProjects = await _context.Projects
                 .Include(p => p.Supervisor)
                 .Where(p => p.SupervisorFlagged == true)
@@ -820,7 +897,7 @@ namespace FYP_App.Controllers
             var project = await _context.Projects.FindAsync(projectId);
             if (project != null)
             {
-                project.SupervisorFlagged = false; // Clears the flag
+                project.SupervisorFlagged = false;
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "Report acknowledged and removed from list.";
             }

@@ -84,15 +84,18 @@ namespace FYP_App.Controllers
                 if (decision == "FeedbackOnly")
                 {
                     submission.Remarks = remarks;
-                    
+
                     TempData["Success"] = "Feedback updated successfully. Student can view it now.";
                 }
                 // OPTION B: Make Decision 
                 else
                 {
-                    submission.Status = (decision == "Approve") ? "Approved" : "Rejected";
+                    // ---> THIS IS THE CRITICAL FIX <---
+                    // Changes status to "Pending Coordinator" instead of skipping straight to "Approved"
+                    submission.Status = (decision == "Approve") ? "Pending Coordinator" : "Rejected";
+
                     submission.Remarks = remarks;
-                    TempData["Success"] = "Document status updated.";
+                    TempData["Success"] = "Document status updated and forwarded to Coordinator.";
                 }
 
                 await _context.SaveChangesAsync();

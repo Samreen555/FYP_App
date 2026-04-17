@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat code coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>[FYP_App.Migrations]*</Exclude>
+          <Exclude>[FYP_App.Views]*</Exclude>
+          <Exclude>[FYP_App.wwwroot]*</Exclude>
+          <Exclude>[*.Tests]*</Exclude>
+          <Exclude>[*.UITests]*</Exclude>
+          <Exclude>[*]*.Designer</Exclude>
+          <Exclude>[*]*.g.cs</Exclude>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
